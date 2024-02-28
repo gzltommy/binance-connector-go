@@ -736,7 +736,8 @@ func (s *TickerPrice) Do(ctx context.Context, opts ...RequestOption) (res *Ticke
 		r.setParam("symbol", *s.symbol)
 	}
 	if s.symbols != nil {
-		r.setParam("symbols", *s.symbols)
+		bu, _ := json.Marshal(s.symbols)
+		r.setParam("symbols", string(bu))
 	}
 	data, err := s.c.callAPI(ctx, r, opts...)
 	if err != nil {
