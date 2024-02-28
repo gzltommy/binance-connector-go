@@ -726,7 +726,7 @@ func (s *TickerPrice) Symbols(symbols []string) *TickerPrice {
 }
 
 // Send the request
-func (s *TickerPrice) Do(ctx context.Context, opts ...RequestOption) (res *TickerPriceResponse, err error) {
+func (s *TickerPrice) Do(ctx context.Context, opts ...RequestOption) (res []TickerPriceResponse, err error) {
 	r := &request{
 		method:   http.MethodGet,
 		endpoint: "/api/v3/ticker/price",
@@ -743,12 +743,29 @@ func (s *TickerPrice) Do(ctx context.Context, opts ...RequestOption) (res *Ticke
 	if err != nil {
 		return nil, err
 	}
-	res = new(TickerPriceResponse)
-	err = json.Unmarshal(data, res)
+
+	var raw json.RawMessage
+	err = json.Unmarshal(data, &raw)
 	if err != nil {
 		return nil, err
 	}
+
+	if raw[0] == '[' {
+		err = json.Unmarshal(data, &res)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// The response is a single object, not an array, make sure to add it to the slice
+		var singleRes TickerPriceResponse
+		err = json.Unmarshal(data, &singleRes)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, singleRes)
+	}
 	return res, nil
+
 }
 
 // Define TickerPrice response data
